@@ -1,0 +1,230 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ==========================
+// 1. CỤM PHÂN QUYỀN & NHÂN SỰ
+// ==========================
+model Role {
+  id       Int    @id @default(autoincrement()) @map("Role_ID")
+  roleName String @map("Role_Name") // Admin, Manager, Employee, Customer
+  
+  users    User[]
+
+  @@map("ROLES")
+}
+
+model User {
+  id            Int     @id @default(autoincrement()) @map("User_ID")
+  roleId        Int?    @map("Role_ID")
+  role          Role?   @relation(fields: [roleId], references: [id])
+  
+  fullName      String  @map("Full_Name")
+  email         String  @unique // Bổ sung cho đăng nhập
+  phone         String? @unique @map("Phone")
+  passwordHash  String  @map("Password_Hash")
+  loyaltyPoints Int     @default(0) @map("Loyalty_Points")
+  refreshToken  String? @map("Refresh_Token") // Bổ sung cho luồng bảo mật kép
+  
+  // Các mối quan hệ (Relations)
+  skills            EmployeeSkill[]
+  schedules         EmployeeSchedule[]
+  customerPackages  CustomerPackage[]
+  invoices          Invoice[]
+  bookings          Booking[]
+  bookingEmployees  BookingEmployee[]
+  orders            Order[]
+  consultedOrders   OrderDetail[]
+
+  @@map("USERS")
+}
+
+model EmployeeSkill {
+  id         Int     @id @default(autoincrement()) @map("Skill_ID")
+  employeeId Int     @map("Employee_ID")
+  serviceId  Int     @map("Service_ID")
+  
+  employee   User    @relation(fields: [employeeId], references: [id])
+  service    Service @relation(fields: [serviceId], references: [id])
+
+  @@map("EMPLOYEE_SKILLS")
+}
+
+model EmployeeSchedule {
+  id         Int      @id @default(autoincrement()) @map("Schedule_ID")
+  employeeId Int      @map("Employee_ID")
+  workDate   DateTime @db.Date @map("Work_Date")
+  startTime  DateTime @db.Time @map("Start_Time")
+  endTime    DateTime @db.Time @map("End_Time")
+  status     String   @map("Status") // ACTIVE, CANCELLED, LEAVE
+  
+  employee   User     @relation(fields: [employeeId], references: [id])
+
+  @@map("EMPLOYEE_SCHEDULES")
+}
+
+// ==========================
+// 2. CỤM DỊCH VỤ & LIỆU TRÌNH
+// ==========================
+model Service {
+  id             Int     @id @default(autoincrement()) @map("Service_ID")
+  serviceName    String  @map("Service_Name")
+  durationMin    Int     @map("Duration_Min")
+  price          Decimal @map("Price")
+  commissionRate Decimal @map("Commission_Rate")
+
+  employeeSkills EmployeeSkill[]
+  bookingDetails BookingDetail[]
+
+  @@map("SERVICES")
+}
+
+model Package {
+  id            Int     @id @default(autoincrement()) @map("Package_ID")
+  packageName   String  @map("Package_Name")
+  totalSessions Int     @map("Total_Sessions")
+  price         Decimal @map("Price")
+
+  customerPackages CustomerPackage[]
+
+  @@map("PACKAGES")
+}
+
+model CustomerPackage {
+  id                Int     @id @default(autoincrement()) @map("Cust_Pkg_ID")
+  customerId        Int     @map("Customer_ID")
+  packageId         Int     @map("Package_ID")
+  remainingSessions Int     @map("Remaining_Sessions")
+
+  customer          User    @relation(fields: [customerId], references: [id])
+  package           Package @relation(fields: [packageId], references: [id])
+  bookingDetails    BookingDetail[]
+
+  @@map("CUSTOMER_PACKAGES")
+}
+
+// ==========================
+// 3. THANH TOÁN TỔNG HỢP
+// ==========================
+model Invoice {
+  id            Int      @id @default(autoincrement()) @map("Invoice_ID")
+  customerId    Int      @map("Customer_ID")
+  totalAmount   Decimal  @map("Total_Amount")
+  paymentMethod String   @map("Payment_Method") // CASH, TRANSFER, CARD
+  status        String   @map("Status") // PENDING, PAID, REFUNDED
+  createdAt     DateTime @default(now()) @map("Created_At")
+
+  customer      User     @relation(fields: [customerId], references: [id])
+  bookings      Booking[]
+  orders        Order[]
+
+  @@map("INVOICES")
+}
+
+// ==========================
+// 4. CỤM GIAO DỊCH DỊCH VỤ
+// ==========================
+model Booking {
+  id          Int      @id @default(autoincrement()) @map("Booking_ID")
+  customerId  Int      @map("Customer_ID")
+  invoiceId   Int      @map("Invoice_ID")
+  arrivalTime DateTime @map("Arrival_Time")
+  status      String   @map("Status") // PENDING, CONFIRMED, CANCELLED
+
+  customer    User     @relation(fields: [customerId], references: [id])
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id])
+  details     BookingDetail[]
+
+  @@map("BOOKINGS")
+}
+
+model BookingDetail {
+  id           Int      @id @default(autoincrement()) @map("Booking_Detail_ID")
+  bookingId    Int      @map("Booking_ID")
+  serviceId    Int      @map("Service_ID")
+  custPkgId    Int?     @map("Cust_Pkg_ID")
+  startTime    DateTime @map("Start_Time")
+  endTime      DateTime @map("End_Time")
+  actualPrice  Decimal  @map("Actual_Price")
+
+  booking         Booking          @relation(fields: [bookingId], references: [id])
+  service         Service          @relation(fields: [serviceId], references: [id])
+  customerPackage CustomerPackage? @relation(fields: [custPkgId], references: [id])
+  employees       BookingEmployee[]
+  progress        CustomerProgress[]
+
+  @@map("BOOKING_DETAILS")
+}
+
+model BookingEmployee {
+  id               Int     @id @default(autoincrement()) @map("BE_ID")
+  bookingDetailId  Int     @map("Booking_Detail_ID")
+  employeeId       Int     @map("Employee_ID")
+  roleType         String  @map("Role_Type") // MAIN, ASSISTANT
+  commissionEarned Decimal @map("Commission_Earned")
+
+  bookingDetail BookingDetail @relation(fields: [bookingDetailId], references: [id])
+  employee      User          @relation(fields: [employeeId], references: [id])
+
+  @@map("BOOKING_EMPLOYEES")
+}
+
+model CustomerProgress {
+  id              Int     @id @default(autoincrement()) @map("Progress_ID")
+  bookingDetailId Int     @map("Booking_Detail_ID")
+  imgBeforeUrl    String? @map("Img_Before_Url")
+  imgAfterUrl     String? @map("Img_After_Url")
+  notes           String? @map("Notes")
+
+  bookingDetail   BookingDetail @relation(fields: [bookingDetailId], references: [id])
+
+  @@map("CUSTOMER_PROGRESS")
+}
+
+// ==========================
+// 5. CỤM THƯƠNG MẠI ĐIỆN TỬ
+// ==========================
+model Product {
+  id             Int     @id @default(autoincrement()) @map("Product_ID")
+  productName    String  @map("Product_Name")
+  price          Decimal @map("Price")
+  stockQuantity  Int     @map("Stock_Quantity")
+  commissionRate Decimal @map("Commission_Rate")
+
+  orderDetails   OrderDetail[]
+
+  @@map("PRODUCTS")
+}
+
+model Order {
+  id         Int     @id @default(autoincrement()) @map("Order_ID")
+  customerId Int     @map("Customer_ID")
+  invoiceId  Int     @map("Invoice_ID")
+  status     String  @map("Status") // PENDING, DELIVERED
+
+  customer   User    @relation(fields: [customerId], references: [id])
+  invoice    Invoice @relation(fields: [invoiceId], references: [id])
+  details    OrderDetail[]
+
+  @@map("ORDERS")
+}
+
+model OrderDetail {
+  id               Int     @id @default(autoincrement()) @map("Order_Detail_ID")
+  orderId          Int     @map("Order_ID")
+  productId        Int     @map("Product_ID")
+  employeeId       Int     @map("Employee_ID")
+  quantity         Int     @map("Quantity")
+  unitPrice        Decimal @map("Unit_Price")
+  commissionEarned Decimal @map("Commission_Earned")
+
+  order      Order   @relation(fields: [orderId], references: [id])
+  product    Product @relation(fields: [productId], references: [id])
+  employee   User    @relation(fields: [employeeId], references: [id])
+
+  @@map("ORDER_DETAILS")
+}

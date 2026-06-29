@@ -1,0 +1,17 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:16-alpine # Sử dụng bản Alpine siêu nhẹ của Postgres
+    container_name: amazinpro-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456 # Đặt mật khẩu đơn giản cho môi trường Dev
+      POSTGRES_DB: amazinpro_db # Tên cơ sở dữ liệu sẽ tự động tạo
+    ports:
+      - '5432:5432' # Cổng mặc định của Postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data # Lưu lại dữ liệu không bị mất khi tắt Docker
+
+volumes:
+  postgres_data:
