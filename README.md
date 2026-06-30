@@ -96,3 +96,56 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+
+AmazinPro Backend Base Project
+Đây là dự án Backend Core cho hệ thống quản lý Spa, được xây dựng với kiến trúc Micro-service-ready bằng NestJS.
+
+🚀 Công nghệ sử dụng
+Framework: NestJS (Modular Architecture)
+
+Database: PostgreSQL (Prisma ORM, UUID-based IDs)
+
+Cache/Queue: Redis (Caching & BullMQ)
+
+Security: JWT Authentication, RBAC (Role-Based Access Control), Throttling (Rate Limiting)
+
+Docs: Swagger API
+
+Container: Docker (PostgreSQL & Redis)
+
+🛠 Cấu trúc dự án
+Plaintext
+src/
+├── common/          # Decorators, Guards, Enums, Filters
+├── modules/         # Các nghiệp vụ: Auth, Users, Bookings, Services...
+├── prisma/          # Cấu hình Database & Schema
+└── main.ts          # Entry point (Swagger & Global Filters)
+⚙️ Hướng dẫn cài đặt
+1. Khởi chạy Database & Redis
+Sử dụng Docker để khởi chạy các dịch vụ nền tảng:
+
+Bash
+docker-compose up -d
+2. Cài đặt Dependencies
+Bash
+yarn install
+3. Chạy Migration & Generate Prisma Client
+Bash
+yarn prisma migrate dev
+yarn prisma generate
+4. Khởi chạy ứng dụng
+Bash
+yarn start:dev
+📚 API Documentation
+Sau khi khởi chạy ứng dụng, truy cập:
+http://localhost:3000/api để xem tài liệu Swagger tương tác.
+
+✨ Điểm nhấn kỹ thuật
+UUID Strategy: Đảm bảo tính bảo mật và phân tán.
+
+Global Error Handling: Thống nhất cấu trúc JSON lỗi toàn hệ thống.
+
+Performance: Sử dụng Redis Caching cho dữ liệu đọc nhiều và BullMQ cho tác vụ nền.
+
+Security: Chống Spam API với Rate Limiting tích hợp trên Redis.

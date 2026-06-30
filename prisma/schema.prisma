@@ -10,7 +10,7 @@ datasource db {
 // 1. CỤM PHÂN QUYỀN & NHÂN SỰ
 // ==========================
 model Role {
-  id       Int    @id @default(autoincrement()) @map("Role_ID")
+  id       String @id @default(uuid()) @map("Role_ID")
   roleName String @map("Role_Name") // Admin, Manager, Employee, Customer
   
   users    User[]
@@ -19,8 +19,8 @@ model Role {
 }
 
 model User {
-  id            Int     @id @default(autoincrement()) @map("User_ID")
-  roleId        Int?    @map("Role_ID")
+  id            String  @id @default(uuid()) @map("User_ID")
+  roleId        String? @map("Role_ID")
   role          Role?   @relation(fields: [roleId], references: [id])
   
   fullName      String  @map("Full_Name")
@@ -44,9 +44,9 @@ model User {
 }
 
 model EmployeeSkill {
-  id         Int     @id @default(autoincrement()) @map("Skill_ID")
-  employeeId Int     @map("Employee_ID")
-  serviceId  Int     @map("Service_ID")
+  id         String  @id @default(uuid()) @map("Skill_ID")
+  employeeId String  @map("Employee_ID")
+  serviceId  String  @map("Service_ID")
   
   employee   User    @relation(fields: [employeeId], references: [id])
   service    Service @relation(fields: [serviceId], references: [id])
@@ -55,8 +55,8 @@ model EmployeeSkill {
 }
 
 model EmployeeSchedule {
-  id         Int      @id @default(autoincrement()) @map("Schedule_ID")
-  employeeId Int      @map("Employee_ID")
+  id         String   @id @default(uuid()) @map("Schedule_ID")
+  employeeId String   @map("Employee_ID")
   workDate   DateTime @db.Date @map("Work_Date")
   startTime  DateTime @db.Time @map("Start_Time")
   endTime    DateTime @db.Time @map("End_Time")
@@ -71,7 +71,7 @@ model EmployeeSchedule {
 // 2. CỤM DỊCH VỤ & LIỆU TRÌNH
 // ==========================
 model Service {
-  id             Int     @id @default(autoincrement()) @map("Service_ID")
+  id             String  @id @default(uuid()) @map("Service_ID")
   serviceName    String  @map("Service_Name")
   durationMin    Int     @map("Duration_Min")
   price          Decimal @map("Price")
@@ -84,7 +84,7 @@ model Service {
 }
 
 model Package {
-  id            Int     @id @default(autoincrement()) @map("Package_ID")
+  id            String  @id @default(uuid()) @map("Package_ID")
   packageName   String  @map("Package_Name")
   totalSessions Int     @map("Total_Sessions")
   price         Decimal @map("Price")
@@ -95,9 +95,9 @@ model Package {
 }
 
 model CustomerPackage {
-  id                Int     @id @default(autoincrement()) @map("Cust_Pkg_ID")
-  customerId        Int     @map("Customer_ID")
-  packageId         Int     @map("Package_ID")
+  id                String  @id @default(uuid()) @map("Cust_Pkg_ID")
+  customerId        String  @map("Customer_ID")
+  packageId         String  @map("Package_ID")
   remainingSessions Int     @map("Remaining_Sessions")
 
   customer          User    @relation(fields: [customerId], references: [id])
@@ -111,8 +111,8 @@ model CustomerPackage {
 // 3. THANH TOÁN TỔNG HỢP
 // ==========================
 model Invoice {
-  id            Int      @id @default(autoincrement()) @map("Invoice_ID")
-  customerId    Int      @map("Customer_ID")
+  id            String   @id @default(uuid()) @map("Invoice_ID")
+  customerId    String   @map("Customer_ID")
   totalAmount   Decimal  @map("Total_Amount")
   paymentMethod String   @map("Payment_Method") // CASH, TRANSFER, CARD
   status        String   @map("Status") // PENDING, PAID, REFUNDED
@@ -129,9 +129,9 @@ model Invoice {
 // 4. CỤM GIAO DỊCH DỊCH VỤ
 // ==========================
 model Booking {
-  id          Int      @id @default(autoincrement()) @map("Booking_ID")
-  customerId  Int      @map("Customer_ID")
-  invoiceId   Int      @map("Invoice_ID")
+  id          String   @id @default(uuid()) @map("Booking_ID")
+  customerId  String   @map("Customer_ID")
+  invoiceId   String   @map("Invoice_ID")
   arrivalTime DateTime @map("Arrival_Time")
   status      String   @map("Status") // PENDING, CONFIRMED, CANCELLED
 
@@ -143,10 +143,10 @@ model Booking {
 }
 
 model BookingDetail {
-  id           Int      @id @default(autoincrement()) @map("Booking_Detail_ID")
-  bookingId    Int      @map("Booking_ID")
-  serviceId    Int      @map("Service_ID")
-  custPkgId    Int?     @map("Cust_Pkg_ID")
+  id           String   @id @default(uuid()) @map("Booking_Detail_ID")
+  bookingId    String   @map("Booking_ID")
+  serviceId    String   @map("Service_ID")
+  custPkgId    String?  @map("Cust_Pkg_ID")
   startTime    DateTime @map("Start_Time")
   endTime      DateTime @map("End_Time")
   actualPrice  Decimal  @map("Actual_Price")
@@ -161,9 +161,9 @@ model BookingDetail {
 }
 
 model BookingEmployee {
-  id               Int     @id @default(autoincrement()) @map("BE_ID")
-  bookingDetailId  Int     @map("Booking_Detail_ID")
-  employeeId       Int     @map("Employee_ID")
+  id               String  @id @default(uuid()) @map("BE_ID")
+  bookingDetailId  String  @map("Booking_Detail_ID")
+  employeeId       String  @map("Employee_ID")
   roleType         String  @map("Role_Type") // MAIN, ASSISTANT
   commissionEarned Decimal @map("Commission_Earned")
 
@@ -174,8 +174,8 @@ model BookingEmployee {
 }
 
 model CustomerProgress {
-  id              Int     @id @default(autoincrement()) @map("Progress_ID")
-  bookingDetailId Int     @map("Booking_Detail_ID")
+  id              String  @id @default(uuid()) @map("Progress_ID")
+  bookingDetailId String  @map("Booking_Detail_ID")
   imgBeforeUrl    String? @map("Img_Before_Url")
   imgAfterUrl     String? @map("Img_After_Url")
   notes           String? @map("Notes")
@@ -189,7 +189,7 @@ model CustomerProgress {
 // 5. CỤM THƯƠNG MẠI ĐIỆN TỬ
 // ==========================
 model Product {
-  id             Int     @id @default(autoincrement()) @map("Product_ID")
+  id             String  @id @default(uuid()) @map("Product_ID")
   productName    String  @map("Product_Name")
   price          Decimal @map("Price")
   stockQuantity  Int     @map("Stock_Quantity")
@@ -201,9 +201,9 @@ model Product {
 }
 
 model Order {
-  id         Int     @id @default(autoincrement()) @map("Order_ID")
-  customerId Int     @map("Customer_ID")
-  invoiceId  Int     @map("Invoice_ID")
+  id         String  @id @default(uuid()) @map("Order_ID")
+  customerId String  @map("Customer_ID")
+  invoiceId  String  @map("Invoice_ID")
   status     String  @map("Status") // PENDING, DELIVERED
 
   customer   User    @relation(fields: [customerId], references: [id])
@@ -214,10 +214,10 @@ model Order {
 }
 
 model OrderDetail {
-  id               Int     @id @default(autoincrement()) @map("Order_Detail_ID")
-  orderId          Int     @map("Order_ID")
-  productId        Int     @map("Product_ID")
-  employeeId       Int     @map("Employee_ID")
+  id               String  @id @default(uuid()) @map("Order_Detail_ID")
+  orderId          String  @map("Order_ID")
+  productId        String  @map("Product_ID")
+  employeeId       String  @map("Employee_ID")
   quantity         Int     @map("Quantity")
   unitPrice        Decimal @map("Unit_Price")
   commissionEarned Decimal @map("Commission_Earned")
