@@ -15,6 +15,7 @@ export class AuthService {
     async register(data: RegisterDto) {
         const existingUser = await this.prisma.user.findUnique({
             where: { email: data.email },
+            include: { role: true },
         });
 
         if (existingUser) {
@@ -37,7 +38,7 @@ export class AuthService {
                 id: newUser.id,
                 email: newUser.email,
                 fullName: newUser.fullName,
-                role: newUser.roleId,
+                roleId: newUser.roleId,
             }
         };
     }
@@ -45,6 +46,7 @@ export class AuthService {
     async login(data: LoginDto) {
         const user = await this.prisma.user.findUnique({
             where: { email: data.email },
+            include: { role: true },
         });
         if (!user) {
             throw new UnauthorizedException('Email hoặc mật khẩu không chính xác');
@@ -59,6 +61,7 @@ export class AuthService {
             sub: user.id,
             email: user.email,
             roleId: user.roleId,
+            roleName: user.role?.roleName || null,
         };
 
         const accessToken = await this.jwtService.signAsync(payload, {

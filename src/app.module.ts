@@ -5,6 +5,13 @@ import { PrismaModule } from './modules/prisma/prisma.module';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './modules/auth/auth.module';
 import { ServicesModule } from './modules/services/services.module';
+import { PackagesModule } from './modules/packages/packages.module';
+import { StaffModule } from './modules/staff/staff.module';
+import { UsersModule } from './modules/users/users.module';
+import { InvoicesModule } from './modules/invoices/invoices.module';
+import { BookingsModule } from './modules/bookings/bookings.module';
+import { ProductsModule } from './modules/products/products.module';
+import { OrdersModule } from './modules/orders/orders.module';
 
 @Module({
   imports: [
@@ -15,6 +22,13 @@ import { ServicesModule } from './modules/services/services.module';
     PrismaModule,
     AuthModule,
     ServicesModule,
+    PackagesModule,
+    StaffModule,
+    UsersModule,
+    InvoicesModule,
+    BookingsModule,
+    ProductsModule,
+    OrdersModule,
   ],
   controllers: [AppController],
   providers: [AppService],
