@@ -12,6 +12,8 @@ import { InvoicesModule } from './modules/invoices/invoices.module';
 import { BookingsModule } from './modules/bookings/bookings.module';
 import { ProductsModule } from './modules/products/products.module';
 import { OrdersModule } from './modules/orders/orders.module';
+import { RedisModule } from './modules/redis/redis.module';
+import { QueuesModule } from './modules/queues/queues.module';
 
 @Module({
   imports: [
@@ -29,6 +31,8 @@ import { OrdersModule } from './modules/orders/orders.module';
     BookingsModule,
     ProductsModule,
     OrdersModule,
+    RedisModule,
+    QueuesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

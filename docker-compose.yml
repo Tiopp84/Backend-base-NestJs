@@ -12,6 +12,14 @@ services:
       - '5432:5432' # Cổng mặc định của Postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data # Lưu lại dữ liệu không bị mất khi tắt Docker
-
+  redis:
+    image: redis:7-alpine
+    container_name: amazinpro-redis
+    restart: always
+    ports:
+      - '6379:6379' # Cổng mặc định của Redis
+    volumes:
+      - redis_data:/data
 volumes:
   postgres_data:
+  redis_data:
