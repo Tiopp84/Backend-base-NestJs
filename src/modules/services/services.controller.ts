@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Patch, Param, Delete, UseGuards, Query } from '@nestjs/common';
 import { ServicesService } from './services.service';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { CreateServiceDto } from './dto/create-service.dto';
@@ -7,6 +7,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { Role } from 'src/common/enums/role.enum';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 @ApiTags('services')
 @Controller('services')
@@ -17,8 +18,8 @@ export class ServicesController {
 
     @ApiOperation({ summary: 'Get all services' })
     @Get()
-    findAll() {
-        return this.servicesService.findAll();
+    findAll(@Query() paginationDto: PaginationDto) {
+        return this.servicesService.findAll(paginationDto);
     }
 
 

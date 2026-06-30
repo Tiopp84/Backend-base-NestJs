@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Body, Patch, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, UseGuards, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
@@ -27,8 +28,8 @@ export class OrdersController {
   @Get()
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(Role.Admin, Role.Manager, Role.Employee)
-  findAll() {
-    return this.ordersService.findAll();
+  findAll(@Query() paginationDto: PaginationDto) {
+    return this.ordersService.findAll(paginationDto);
   }
 
   @ApiBearerAuth()

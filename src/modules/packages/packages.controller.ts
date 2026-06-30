@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { PackagesService } from './packages.service';
 import { CreatePackageDto } from './dto/create-package.dto';
 import { UpdatePackageDto } from './dto/update-package.dto';
@@ -17,8 +18,8 @@ export class PackagesController {
 
     @ApiOperation({ summary: 'Get all packages' })
     @Get()
-    findAll() {
-        return this.packageService.findAll();
+    findAll(@Query() paginationDto: PaginationDto) {
+        return this.packageService.findAll(paginationDto);
     }
 
 

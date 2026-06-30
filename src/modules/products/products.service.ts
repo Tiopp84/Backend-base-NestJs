@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 @Injectable()
 export class ProductsService {
@@ -18,8 +19,28 @@ export class ProductsService {
     });
   }
 
-  async findAll() {
-    return this.prisma.product.findMany();
+  async findAll(paginationDto: PaginationDto) {
+    const { page, limit, sortBy, order } = paginationDto;
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await Promise.all([
+        this.prisma.product.findMany({
+            skip,
+            take: limit,
+            orderBy: { [sortBy]: order } as any,
+        }),
+        this.prisma.product.count(),
+    ]);
+
+    return {
+        data,
+        meta: {
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit),
+        },
+    };
   }
 
   async findOne(id: string) {

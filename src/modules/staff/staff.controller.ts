@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { StaffService } from './staff.service';
 import { AssignSkillDto } from './dto/assign-skill.dto';
 import { CreateScheduleDto } from './dto/create-schedule.dto';
@@ -18,8 +19,8 @@ export class StaffController {
   @Get()
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(Role.Admin, Role.Manager)
-  findAllStaff() {
-    return this.staffService.findAllStaff();
+  findAllStaff(@Query() paginationDto: PaginationDto) {
+    return this.staffService.findAllStaff(paginationDto);
   }
 
   @ApiBearerAuth()
@@ -45,7 +46,7 @@ export class StaffController {
   @Get('schedules/:employeeId')
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(Role.Admin, Role.Manager, Role.Employee)
-  getSchedules(@Param('employeeId') employeeId: string) {
-    return this.staffService.getSchedules(employeeId);
+  getSchedules(@Param('employeeId') employeeId: string, @Query() paginationDto: PaginationDto) {
+    return this.staffService.getSchedules(employeeId, paginationDto);
   }
 }
