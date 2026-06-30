@@ -1,13 +1,23 @@
 version: '3.8'
 services:
+  # app:
+  #   build: . # Docker sẽ tự tìm Dockerfile ở thư mục gốc để build
+  #   ports:
+  #     - "3000:3000"
+  #   depends_on:
+  #     - postgres
+  #     - redis
+  #   environment:
+  #     DATABASE_URL: "postgresql://${DB_USER}:${DB_PASS}@postgres:5432/${DB_NAME}?schema=public"
+  #     REDIS_HOST: "redis"
   postgres:
     image: postgres:16-alpine # Sử dụng bản Alpine siêu nhẹ của Postgres
     container_name: amazinpro-postgres
     restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 123456 # Đặt mật khẩu đơn giản cho môi trường Dev
-      POSTGRES_DB: amazinpro_db # Tên cơ sở dữ liệu sẽ tự động tạo
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_DB: ${DB_NAME}
     ports:
       - '5432:5432' # Cổng mặc định của Postgres
     volumes:
@@ -20,6 +30,20 @@ services:
       - '6379:6379' # Cổng mặc định của Redis
     volumes:
       - redis_data:/data
+  minio:
+    image: minio/minio
+    container_name: amazinpro-minio
+    restart: always
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    environment:
+      MINIO_ROOT_USER: ${AWS_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${AWS_SECRET_KEY}
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
 volumes:
   postgres_data:
   redis_data:
+  minio_data:

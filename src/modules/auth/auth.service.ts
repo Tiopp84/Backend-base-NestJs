@@ -52,6 +52,10 @@ export class AuthService {
             throw new UnauthorizedException('Email hoặc mật khẩu không chính xác');
         }
 
+        if (!user.passwordHash) {
+            throw new UnauthorizedException('Tài khoản này được đăng ký qua Google. Vui lòng đăng nhập bằng Google.');
+        }
+
         const isPasswordValid = await bcrypt.compare(data.password, user.passwordHash);
         if (!isPasswordValid) {
             throw new UnauthorizedException('Email hoặc mật khẩu không chính xác');
@@ -65,13 +69,13 @@ export class AuthService {
         };
 
         const accessToken = await this.jwtService.signAsync(payload, {
-            secret: process.env.JWT_ACCESS_SECRET,
-            expiresIn: '15m',
+            secret: process.env.JWT_ACCESS_SECRET as string,
+            expiresIn: (process.env.JWT_ACCESS_EXPIRES_IN || '15m') as any,
         });
 
         const refresToken = await this.jwtService.signAsync(payload, {
-            secret: process.env.JWT_REFRESH_SECRET,
-            expiresIn: '7d',
+            secret: process.env.JWT_REFRESH_SECRET as string,
+            expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN || '7d') as any,
         });
 
         await this.prisma.user.update({
@@ -82,7 +86,106 @@ export class AuthService {
         return {
             message: 'Đăng nhập thành công',
             accessToken,
-            refresToken
+            refreshToken: refresToken
+        };
+    }
+
+    async refreshAccessToken(token: string) {
+        try {
+            const payload = await this.jwtService.verifyAsync(token, {
+                secret: process.env.JWT_REFRESH_SECRET as string,
+            });
+
+            const user = await this.prisma.user.findUnique({
+                where: { id: payload.sub },
+                include: { role: true }
+            });
+
+            if (!user || user.refreshToken !== token) {
+                throw new UnauthorizedException('Refresh token không hợp lệ hoặc đã bị thu hồi');
+            }
+
+            const newPayload = {
+                sub: user.id,
+                email: user.email,
+                roleId: user.roleId,
+                roleName: user.role?.roleName || null,
+            };
+
+            const accessToken = await this.jwtService.signAsync(newPayload, {
+                secret: process.env.JWT_ACCESS_SECRET as string,
+                expiresIn: (process.env.JWT_ACCESS_EXPIRES_IN || '15m') as any,
+            });
+
+            return { accessToken };
+        } catch (error) {
+            throw new UnauthorizedException('Refresh token không hợp lệ hoặc đã hết hạn');
+        }
+    }
+
+    async validateGoogleUser(profile: any) {
+        let user = await this.prisma.user.findFirst({
+            where: {
+                OR: [
+                    { googleId: profile.googleId },
+                    { email: profile.email }
+                ]
+            },
+            include: { role: true }
+        });
+
+        if (user) {
+            // Cập nhật googleId nếu chưa có
+            if (!user.googleId) {
+                user = await this.prisma.user.update({
+                    where: { id: user.id },
+                    data: { googleId: profile.googleId },
+                    include: { role: true }
+                });
+            }
+        } else {
+            // Tạo mới user
+            user = await this.prisma.user.create({
+                data: {
+                    email: profile.email,
+                    fullName: profile.fullName,
+                    googleId: profile.googleId,
+                },
+                include: { role: true }
+            });
+        }
+
+        const payload = {
+            sub: user.id,
+            email: user.email,
+            roleId: user.roleId,
+            roleName: user.role?.roleName || null,
+        };
+
+        const accessToken = await this.jwtService.signAsync(payload, {
+            secret: process.env.JWT_ACCESS_SECRET as string,
+            expiresIn: (process.env.JWT_ACCESS_EXPIRES_IN || '15m') as any,
+        });
+
+        const refresToken = await this.jwtService.signAsync(payload, {
+            secret: process.env.JWT_REFRESH_SECRET as string,
+            expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN || '7d') as any,
+        });
+
+        await this.prisma.user.update({
+            where: { id: user.id },
+            data: { refreshToken: refresToken },
+        });
+
+        return {
+            accessToken,
+            refreshToken: refresToken,
+            user: {
+                id: user.id,
+                email: user.email,
+                fullName: user.fullName,
+                roleId: user.roleId,
+            }
         };
     }
 }

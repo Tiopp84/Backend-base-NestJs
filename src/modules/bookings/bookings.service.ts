@@ -3,12 +3,17 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateBookingStatusDto } from './dto/update-booking-status.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { NotificationsGateway } from '../notifications/notifications.gateway';
 
 @Injectable()
 export class BookingsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationsGateway: NotificationsGateway,
+  ) { }
 
   async create(data: CreateBookingDto) {
+    this.notificationsGateway.sendNotification(data.customerId, 'Bạn có một booking mới');
     return this.prisma.booking.create({
       data: {
         customerId: data.customerId,
@@ -45,27 +50,27 @@ export class BookingsService {
     const skip = (page - 1) * limit;
 
     const [data, total] = await Promise.all([
-        this.prisma.booking.findMany({
-            skip,
-            take: limit,
-            orderBy: { [sortBy]: order } as any,
-            include: {
-              details: {
-                include: { employees: true },
-              },
-            },
-        }),
-        this.prisma.booking.count(),
+      this.prisma.booking.findMany({
+        skip,
+        take: limit,
+        orderBy: { [sortBy]: order } as any,
+        include: {
+          details: {
+            include: { employees: true },
+          },
+        },
+      }),
+      this.prisma.booking.count(),
     ]);
 
     return {
-        data,
-        meta: {
-            total,
-            page,
-            limit,
-            totalPages: Math.ceil(total / limit),
-        },
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
     };
   }
 
