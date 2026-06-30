@@ -1,10 +1,11 @@
-import { Controller, Body, Get, Post, Req, UseGuards } from '@nestjs/common';
+import { Controller, Body, Get, Post, Req, Res, UseGuards, UnauthorizedException } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { AuthGuard } from './guards/auth.guard';
-import type { Request } from 'express';
+import { AuthGuard as PassportAuthGuard } from '@nestjs/passport';
+import type { Request, Response } from 'express';
 import { SkipThrottle, Throttle } from '@nestjs/throttler';
 
 @ApiTags('auth')
@@ -21,8 +22,17 @@ export class AuthController {
     @Throttle({ default: { ttl: 60000, limit: 5 } })
     @ApiOperation({ summary: 'Login user' })
     @Post('login')
-    login(@Body() loginDto: LoginDto) {
-        return this.authService.login(loginDto);
+    async login(@Body() loginDto: LoginDto, @Res({ passthrough: true }) res: Response) {
+        const result = await this.authService.login(loginDto);
+        res.cookie('refreshToken', result.refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+        });
+        return {
+            message: result.message,
+            accessToken: result.accessToken,
+        };
     }
 
     @SkipThrottle()
@@ -35,5 +45,39 @@ export class AuthController {
             message: 'Xác thực thành công. Đây là thông tin của bạn:',
             user: req['user'],
         };
+    }
+
+    @ApiOperation({ summary: 'Login with Google' })
+    @UseGuards(PassportAuthGuard('google'))
+    @Get('google')
+    async googleAuth(@Req() req: Request) {
+        // Guard redirects
+    }
+
+    @ApiOperation({ summary: 'Google Auth Callback' })
+    @UseGuards(PassportAuthGuard('google'))
+    @Get('google/callback')
+    googleAuthRedirect(@Req() req: Request, @Res() res: Response) {
+        // req.user contains the token payload returned from validateGoogleUser
+        const { accessToken, refreshToken } = req.user as any;
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+        
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+        });
+
+        return res.redirect(`${frontendUrl}?accessToken=${accessToken}`);
+    }
+
+    @ApiOperation({ summary: 'Refresh Access Token' })
+    @Post('refresh')
+    async refresh(@Req() req: Request) {
+        const refreshToken = req.cookies?.refreshToken;
+        if (!refreshToken) {
+            throw new UnauthorizedException('Refresh token không tồn tại trong cookie');
+        }
+        return this.authService.refreshAccessToken(refreshToken);
     }
 }

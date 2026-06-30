@@ -26,7 +26,8 @@ model User {
   fullName      String  @map("Full_Name")
   email         String  @unique // Bổ sung cho đăng nhập
   phone         String? @unique @map("Phone")
-  passwordHash  String  @map("Password_Hash")
+  passwordHash  String? @map("Password_Hash")
+  googleId      String? @unique @map("Google_ID")
   loyaltyPoints Int     @default(0) @map("Loyalty_Points")
   refreshToken  String? @map("Refresh_Token") // Bổ sung cho luồng bảo mật kép
   
