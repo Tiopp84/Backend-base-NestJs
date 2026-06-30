@@ -17,6 +17,7 @@ import { ProductsModule } from './modules/products/products.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { RedisModule } from './modules/redis/redis.module';
 import { QueuesModule } from './modules/queues/queues.module';
+import { UploadModule } from './modules/upload/upload.module';
 
 @Module({
   imports: [
@@ -36,14 +37,15 @@ import { QueuesModule } from './modules/queues/queues.module';
     OrdersModule,
     RedisModule,
     QueuesModule,
+    UploadModule,
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         throttlers: [
           {
-            ttl: 60000,
-            limit: 10,
+            ttl: parseInt(config.get<string>('THROTTLE_TTL', '60000'), 10),
+            limit: parseInt(config.get<string>('THROTTLE_LIMIT', '10'), 10),
           },
         ],
         storage: new ThrottlerStorageRedisService(
