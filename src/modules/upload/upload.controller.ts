@@ -5,17 +5,21 @@ import {
     UploadedFile,
     ParseFilePipe,
     MaxFileSizeValidator,
-    FileTypeValidator
+    FileTypeValidator,
+    UseGuards
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UploadService } from './upload.service';
-import { ApiTags, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiConsumes, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
+import { AuthGuard } from '../auth/guards/auth.guard';
 
 @ApiTags('Upload')
 @Controller('upload')
 export class UploadController {
     constructor(private readonly uploadService: UploadService) { }
 
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard)
     @Post('image')
     @ApiConsumes('multipart/form-data')
     @ApiBody({

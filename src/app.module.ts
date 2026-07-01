@@ -18,12 +18,15 @@ import { OrdersModule } from './modules/orders/orders.module';
 import { RedisModule } from './modules/redis/redis.module';
 import { QueuesModule } from './modules/queues/queues.module';
 import { UploadModule } from './modules/upload/upload.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
+import { validate } from './common/config/env.validation';
 
 @Module({
   imports: [
-    // 2. Kích hoạt đọc file .env và biến nó thành Global (toàn cục)
+    // 2. Kích hoạt đọc file .env và biến nó thành Global (toàn cục) với validation
     ConfigModule.forRoot({
-      isGlobal: true
+      isGlobal: true,
+      validate,
     }),
     PrismaModule,
     AuthModule,
@@ -38,6 +41,7 @@ import { UploadModule } from './modules/upload/upload.module';
     RedisModule,
     QueuesModule,
     UploadModule,
+    NotificationsModule,
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

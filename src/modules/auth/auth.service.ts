@@ -4,12 +4,14 @@ import { RegisterDto } from './dto/register.dto';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { LoginDto } from './dto/login.dto';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
     constructor(
         private readonly prisma: PrismaService,
         private readonly jwtService: JwtService,
+        private readonly configService: ConfigService,
     ) { }
 
     async register(data: RegisterDto) {
@@ -69,13 +71,13 @@ export class AuthService {
         };
 
         const accessToken = await this.jwtService.signAsync(payload, {
-            secret: process.env.JWT_ACCESS_SECRET as string,
-            expiresIn: (process.env.JWT_ACCESS_EXPIRES_IN || '15m') as any,
+            secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
+            expiresIn: this.configService.get<string>('JWT_ACCESS_EXPIRES_IN', '15m') as any,
         });
 
         const refresToken = await this.jwtService.signAsync(payload, {
-            secret: process.env.JWT_REFRESH_SECRET as string,
-            expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN || '7d') as any,
+            secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+            expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRES_IN', '7d') as any,
         });
 
         await this.prisma.user.update({
@@ -93,7 +95,7 @@ export class AuthService {
     async refreshAccessToken(token: string) {
         try {
             const payload = await this.jwtService.verifyAsync(token, {
-                secret: process.env.JWT_REFRESH_SECRET as string,
+                secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
             });
 
             const user = await this.prisma.user.findUnique({
@@ -113,8 +115,8 @@ export class AuthService {
             };
 
             const accessToken = await this.jwtService.signAsync(newPayload, {
-                secret: process.env.JWT_ACCESS_SECRET as string,
-                expiresIn: (process.env.JWT_ACCESS_EXPIRES_IN || '15m') as any,
+                secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
+                expiresIn: this.configService.get<string>('JWT_ACCESS_EXPIRES_IN', '15m') as any,
             });
 
             return { accessToken };
@@ -163,13 +165,13 @@ export class AuthService {
         };
 
         const accessToken = await this.jwtService.signAsync(payload, {
-            secret: process.env.JWT_ACCESS_SECRET as string,
-            expiresIn: (process.env.JWT_ACCESS_EXPIRES_IN || '15m') as any,
+            secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
+            expiresIn: this.configService.get<string>('JWT_ACCESS_EXPIRES_IN', '15m') as any,
         });
 
         const refresToken = await this.jwtService.signAsync(payload, {
-            secret: process.env.JWT_REFRESH_SECRET as string,
-            expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN || '7d') as any,
+            secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+            expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRES_IN', '7d') as any,
         });
 
         await this.prisma.user.update({

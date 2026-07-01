@@ -1,13 +1,38 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
+import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const configService = app.get(ConfigService);
+
+  // Cấu hình bảo mật helmet
+  app.use(helmet());
+
+  // Cấu hình CORS
+  const frontendUrl = configService.get<string>('FRONTEND_URL', 'http://localhost:3000');
+  app.enableCors({
+    origin: [frontendUrl],
+    credentials: true,
+  });
+
+  // Kích hoạt shutdown hooks
+  app.enableShutdownHooks();
+
   app.use(cookieParser());
+
+  // Cấu hình global prefix và versioning
+  app.setGlobalPrefix('api');
+  app.enableVersioning({
+    type: VersioningType.URI,
+    defaultVersion: '1',
+  });
+
   // Bật ValidationPipe toàn cục
   app.useGlobalPipes(
     new ValidationPipe({
@@ -16,6 +41,7 @@ async function bootstrap() {
       stopAtFirstError: true,
     }),
   );
+
   // Cấu hình Swagger
   const config = new DocumentBuilder()
     .setTitle('Backend Base Project API')
@@ -36,9 +62,12 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+  SwaggerModule.setup('api-docs', app, document); // Swagger được chuyển sang api-docs để không trùng với prefix api
+
   // Đăng ký bộ lọc lỗi toàn cục
   app.useGlobalFilters(new AllExceptionsFilter());
-  await app.listen(process.env.PORT ?? 3000);
+
+  const port = configService.get<number>('PORT', 3000);
+  await app.listen(port);
 }
 bootstrap();

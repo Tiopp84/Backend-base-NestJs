@@ -41,6 +41,7 @@ model User {
   orders            Order[]
   consultedOrders   OrderDetail[]
 
+  @@index([roleId])
   @@map("USERS")
 }
 
@@ -52,6 +53,8 @@ model EmployeeSkill {
   employee   User    @relation(fields: [employeeId], references: [id])
   service    Service @relation(fields: [serviceId], references: [id])
 
+  @@index([employeeId])
+  @@index([serviceId])
   @@map("EMPLOYEE_SKILLS")
 }
 
@@ -65,6 +68,8 @@ model EmployeeSchedule {
   
   employee   User     @relation(fields: [employeeId], references: [id])
 
+  @@index([employeeId])
+  @@index([workDate])
   @@map("EMPLOYEE_SCHEDULES")
 }
 
@@ -105,6 +110,8 @@ model CustomerPackage {
   package           Package @relation(fields: [packageId], references: [id])
   bookingDetails    BookingDetail[]
 
+  @@index([customerId])
+  @@index([packageId])
   @@map("CUSTOMER_PACKAGES")
 }
 
@@ -123,6 +130,8 @@ model Invoice {
   bookings      Booking[]
   orders        Order[]
 
+  @@index([customerId])
+  @@index([createdAt])
   @@map("INVOICES")
 }
 
@@ -140,6 +149,9 @@ model Booking {
   invoice     Invoice  @relation(fields: [invoiceId], references: [id])
   details     BookingDetail[]
 
+  @@index([customerId])
+  @@index([invoiceId])
+  @@index([arrivalTime])
   @@map("BOOKINGS")
 }
 
@@ -158,6 +170,9 @@ model BookingDetail {
   employees       BookingEmployee[]
   progress        CustomerProgress[]
 
+  @@index([bookingId])
+  @@index([serviceId])
+  @@index([custPkgId])
   @@map("BOOKING_DETAILS")
 }
 
@@ -171,6 +186,8 @@ model BookingEmployee {
   bookingDetail BookingDetail @relation(fields: [bookingDetailId], references: [id])
   employee      User          @relation(fields: [employeeId], references: [id])
 
+  @@index([bookingDetailId])
+  @@index([employeeId])
   @@map("BOOKING_EMPLOYEES")
 }
 
@@ -183,6 +200,7 @@ model CustomerProgress {
 
   bookingDetail   BookingDetail @relation(fields: [bookingDetailId], references: [id])
 
+  @@index([bookingDetailId])
   @@map("CUSTOMER_PROGRESS")
 }
 
@@ -211,6 +229,8 @@ model Order {
   invoice    Invoice @relation(fields: [invoiceId], references: [id])
   details    OrderDetail[]
 
+  @@index([customerId])
+  @@index([invoiceId])
   @@map("ORDERS")
 }
 
@@ -227,5 +247,8 @@ model OrderDetail {
   product    Product @relation(fields: [productId], references: [id])
   employee   User    @relation(fields: [employeeId], references: [id])
 
+  @@index([orderId])
+  @@index([productId])
+  @@index([employeeId])
   @@map("ORDER_DETAILS")
 }

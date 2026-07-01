@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Post, Patch, Param, Delete, UseGuards, Query, UseInterceptors } from '@nestjs/common';
 import { ServicesService } from './services.service';
-import { CacheInterceptor, CacheKey, CacheTTL } from '@nestjs/cache-manager';
+import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
@@ -19,7 +19,6 @@ export class ServicesController {
 
     @ApiOperation({ summary: 'Get all services' })
     @UseInterceptors(CacheInterceptor)
-    @CacheKey('services_all')
     @Get()
     findAll(@Query() paginationDto: PaginationDto) {
         return this.servicesService.findAll(paginationDto);
