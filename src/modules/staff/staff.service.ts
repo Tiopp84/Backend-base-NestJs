@@ -17,13 +17,23 @@ export class StaffService {
 
         const [data, total] = await Promise.all([
             this.prisma.user.findMany({
-                where: { roleId: '' },
+                where: {
+                    role: {
+                        roleName: 'Employee',
+                    },
+                },
                 skip,
                 take: limit,
                 orderBy: { [sortBy]: order } as any,
                 select: userSafeFields,
             }),
-            this.prisma.user.count({ where: { roleId: '' } }),
+            this.prisma.user.count({
+                where: {
+                    role: {
+                        roleName: 'Employee',
+                    },
+                },
+            }),
         ]);
 
         return {

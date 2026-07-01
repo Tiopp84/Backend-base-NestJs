@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, Req } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { UsersService } from './users.service';
@@ -30,6 +30,22 @@ export class UsersController {
   @Roles(Role.Admin, Role.Manager)
   findAll(@Query() paginationDto: PaginationDto) {
     return this.usersService.findAll(paginationDto);
+  }
+
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get current user packages' })
+  @Get('me/packages')
+  @UseGuards(AuthGuard)
+  getMyPackages(@Req() req: any) {
+    return this.usersService.getCustomerPackages(req.user.sub);
+  }
+
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Purchase a package' })
+  @Post('me/packages')
+  @UseGuards(AuthGuard)
+  purchasePackage(@Req() req: any, @Body('packageId') packageId: string) {
+    return this.usersService.purchasePackage(req.user.sub, packageId);
   }
 
   @ApiBearerAuth()

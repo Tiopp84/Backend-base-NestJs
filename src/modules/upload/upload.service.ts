@@ -7,6 +7,6 @@ export class UploadService {
 
     async handleUpload(file: Express.Multer.File) {
         // Chỉ gọi hàm chuẩn, không quan tâm bên dưới là MinIO hay Cloudinary
-        return await this.storage.uploadFile(file, 'avatars');
+        return await this.storage.uploadFile(file, 'uploads');
     }
 }

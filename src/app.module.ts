@@ -19,6 +19,7 @@ import { RedisModule } from './modules/redis/redis.module';
 import { QueuesModule } from './modules/queues/queues.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { ProgressModule } from './modules/progress/progress.module';
 import { validate } from './common/config/env.validation';
 
 @Module({
@@ -42,6 +43,7 @@ import { validate } from './common/config/env.validation';
     QueuesModule,
     UploadModule,
     NotificationsModule,
+    ProgressModule,
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

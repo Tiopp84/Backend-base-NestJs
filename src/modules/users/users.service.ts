@@ -99,5 +99,63 @@ export class UsersService {
       select: userSafeFields,
     });
   }
+
+  async getCustomerPackages(userId: string) {
+    return this.prisma.customerPackage.findMany({
+      where: { customerId: userId },
+      include: { package: true },
+    });
+  }
+
+  async purchasePackage(userId: string, packageId: string) {
+    const pkg = await this.prisma.package.findUnique({
+      where: { id: packageId },
+    });
+    if (!pkg) {
+      throw new NotFoundException(`Package with ID ${packageId} not found`);
+    }
+
+    // 1. Tạo Invoice
+    const invoice = await this.prisma.invoice.create({
+      data: {
+        customerId: userId,
+        totalAmount: pkg.price,
+        paymentMethod: 'CASH',
+        status: 'PAID',
+      },
+    });
+
+    // 2. Tạo CustomerPackage
+    const customerPackage = await this.prisma.customerPackage.create({
+      data: {
+        customerId: userId,
+        packageId: packageId,
+        remainingSessions: pkg.totalSessions,
+      },
+      include: {
+        package: true,
+      },
+    });
+
+    // 3. Cộng điểm tích lũy Loyalty (Mỗi 10,000 VND spent = 1 điểm)
+    const pointsToAdd = Math.floor(Number(pkg.price) / 10000);
+    if (pointsToAdd > 0) {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+      });
+      if (user) {
+        await this.prisma.user.update({
+          where: { id: userId },
+          data: { loyaltyPoints: user.loyaltyPoints + pointsToAdd },
+        });
+      }
+    }
+
+    return {
+      message: 'Mua gói liệu trình thành công!',
+      invoice,
+      customerPackage,
+    };
+  }
 }
 

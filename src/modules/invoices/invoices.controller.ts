@@ -18,7 +18,7 @@ export class InvoicesController {
   @ApiOperation({ summary: 'Create a new invoice' })
   @Post()
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(Role.Admin, Role.Manager, Role.Employee)
+  @Roles(Role.Admin, Role.Manager, Role.Employee, Role.Customer)
   create(@Body() createInvoiceDto: CreateInvoiceDto) {
     return this.invoicesService.create(createInvoiceDto);
   }

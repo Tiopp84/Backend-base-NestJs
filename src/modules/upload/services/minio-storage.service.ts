@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { IFileStorage } from '../interfaces/file-storage.interface';
-import { S3Client, PutObjectCommand, CreateBucketCommand, HeadBucketCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, CreateBucketCommand, HeadBucketCommand, PutBucketPolicyCommand } from '@aws-sdk/client-s3';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
@@ -23,22 +23,48 @@ export class MinioStorageService implements IFileStorage, OnModuleInit {
     }
 
     async onModuleInit() {
+        let bucketExists = false;
         try {
             await this.s3.send(new HeadBucketCommand({ Bucket: this.bucketName }));
             this.logger.log(`Bucket '${this.bucketName}' already exists.`);
+            bucketExists = true;
         } catch (error) {
             this.logger.warn(`Bucket '${this.bucketName}' does not exist. Creating...`);
             try {
                 await this.s3.send(new CreateBucketCommand({ Bucket: this.bucketName }));
                 this.logger.log(`Bucket '${this.bucketName}' created successfully.`);
+                bucketExists = true;
             } catch (createError) {
                 this.logger.error(`Failed to create bucket '${this.bucketName}':`, createError);
+            }
+        }
+
+        if (bucketExists) {
+            try {
+                const policy = {
+                    Version: '2012-10-17',
+                    Statement: [
+                        {
+                            Effect: 'Allow',
+                            Principal: '*',
+                            Action: ['s3:GetObject'],
+                            Resource: [`arn:aws:s3:::${this.bucketName}/*`],
+                        },
+                    ],
+                };
+                await this.s3.send(new PutBucketPolicyCommand({
+                    Bucket: this.bucketName,
+                    Policy: JSON.stringify(policy),
+                }));
+                this.logger.log(`Bucket '${this.bucketName}' policy set to public read-only.`);
+            } catch (policyError) {
+                this.logger.error(`Failed to set public policy for bucket '${this.bucketName}':`, policyError);
             }
         }
     }
 
     async uploadFile(file: Express.Multer.File, folder: string): Promise<string> {
-        const key = `${folder}/${Date.now()}-${file.originalname.replace(/\\s+/g, '-')}`;
+        const key = `${folder}/${Date.now()}-${file.originalname.replace(/\s+/g, '-')}`;
         await this.s3.send(new PutObjectCommand({
             Bucket: this.bucketName,
             Key: key,

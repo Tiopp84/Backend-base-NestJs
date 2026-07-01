@@ -18,7 +18,7 @@ export class StaffController {
   @ApiOperation({ summary: 'Get all staff members' })
   @Get()
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(Role.Admin, Role.Manager)
+  @Roles(Role.Admin, Role.Manager, Role.Customer)
   findAllStaff(@Query() paginationDto: PaginationDto) {
     return this.staffService.findAllStaff(paginationDto);
   }
@@ -45,7 +45,7 @@ export class StaffController {
   @ApiOperation({ summary: 'Get schedules of an employee' })
   @Get('schedules/:employeeId')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(Role.Admin, Role.Manager, Role.Employee)
+  @Roles(Role.Admin, Role.Manager, Role.Employee, Role.Customer)
   getSchedules(@Param('employeeId') employeeId: string, @Query() paginationDto: PaginationDto) {
     return this.staffService.getSchedules(employeeId, paginationDto);
   }

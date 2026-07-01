@@ -40,10 +40,19 @@ export class AuthController {
     @ApiOperation({ summary: 'Get current user profile' })
     @UseGuards(AuthGuard)
     @Get('me')
-    getProfile(@Req() req: Request) {
+    async getProfile(@Req() req: Request) {
+        const user = req.user as any;
+        const freshUser = await this.authService.getFreshProfile(user.sub);
         return {
             message: 'Xác thực thành công. Đây là thông tin của bạn:',
-            user: req['user'],
+            user: {
+                id: freshUser?.id,
+                email: freshUser?.email,
+                fullName: freshUser?.fullName,
+                phone: freshUser?.phone,
+                loyaltyPoints: freshUser?.loyaltyPoints || 0,
+                role: freshUser?.role?.roleName || 'Customer',
+            },
         };
     }
 

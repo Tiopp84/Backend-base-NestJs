@@ -18,7 +18,7 @@ export class OrdersController {
   @ApiOperation({ summary: 'Create a new order' })
   @Post()
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(Role.Admin, Role.Manager, Role.Employee)
+  @Roles(Role.Admin, Role.Manager, Role.Employee, Role.Customer)
   create(@Body() createOrderDto: CreateOrderDto) {
     return this.ordersService.create(createOrderDto);
   }

@@ -14,6 +14,14 @@ async function bootstrap() {
   // Cấu hình bảo mật helmet
   app.use(helmet());
 
+  // Rewrite /auth/google/callback sang /api/v1/auth/google/callback để khớp với cấu hình Client ID của Google và NestJS Prefix/Versioning
+  app.use((req: any, res: any, next: any) => {
+    if (req.path === '/auth/google/callback') {
+      req.url = '/api/v1/auth/google/callback' + req.url.substring('/auth/google/callback'.length);
+    }
+    next();
+  });
+
   // Cấu hình CORS
   const frontendUrl = configService.get<string>('FRONTEND_URL', 'http://localhost:3000');
   app.enableCors({

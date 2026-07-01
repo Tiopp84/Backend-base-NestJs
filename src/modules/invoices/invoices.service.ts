@@ -47,7 +47,18 @@ export class InvoicesService {
   async findOne(id: string) {
     const invoice = await this.prisma.invoice.findUnique({
       where: { id },
-      include: { bookings: true, orders: true },
+      include: {
+        bookings: {
+          include: {
+            details: true,
+          },
+        },
+        orders: {
+          include: {
+            details: true,
+          },
+        },
+      },
     });
     if (!invoice) {
       throw new NotFoundException(`Invoice with ID ${id} not found`);
@@ -56,7 +67,60 @@ export class InvoicesService {
   }
 
   async updateStatus(id: string, data: UpdateInvoiceStatusDto) {
-    await this.findOne(id); // Ensure exists
+    const invoice = await this.findOne(id);
+    
+    if (data.status === 'PAID' && invoice.status !== 'PAID') {
+      await this.prisma.$transaction(async (tx) => {
+        // 1. Trừ buổi liệu trình của khách
+        for (const booking of invoice.bookings) {
+          for (const detail of booking.details) {
+            if (detail.custPkgId) {
+              const custPkg = await tx.customerPackage.findUnique({
+                where: { id: detail.custPkgId },
+              });
+              if (custPkg) {
+                const newSessions = Math.max(0, custPkg.remainingSessions - 1);
+                await tx.customerPackage.update({
+                  where: { id: custPkg.id },
+                  data: { remainingSessions: newSessions },
+                });
+              }
+            }
+          }
+        }
+
+        // 2. Trừ tồn kho sản phẩm trong đơn hàng
+        for (const order of invoice.orders) {
+          for (const detail of order.details) {
+            const product = await tx.product.findUnique({
+              where: { id: detail.productId },
+            });
+            if (product) {
+              const newStock = Math.max(0, product.stockQuantity - detail.quantity);
+              await tx.product.update({
+                where: { id: product.id },
+                data: { stockQuantity: newStock },
+              });
+            }
+          }
+        }
+
+        // 3. Cộng điểm tích lũy Loyalty (Mỗi 10,000 VND spent = 1 điểm)
+        const pointsToAdd = Math.floor(Number(invoice.totalAmount) / 10000);
+        if (pointsToAdd > 0) {
+          const user = await tx.user.findUnique({
+            where: { id: invoice.customerId },
+          });
+          if (user) {
+            await tx.user.update({
+              where: { id: user.id },
+              data: { loyaltyPoints: user.loyaltyPoints + pointsToAdd },
+            });
+          }
+        }
+      });
+    }
+
     return this.prisma.invoice.update({
       where: { id },
       data: {
