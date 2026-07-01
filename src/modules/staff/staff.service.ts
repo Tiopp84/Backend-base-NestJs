@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AssignSkillDto } from './dto/assign-skill.dto';
 import { CreateScheduleDto } from './dto/create-schedule.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { userSafeFields } from '../users/users.service';
 
 @Injectable()
 export class StaffService {
@@ -20,6 +21,7 @@ export class StaffService {
                 skip,
                 take: limit,
                 orderBy: { [sortBy]: order } as any,
+                select: userSafeFields,
             }),
             this.prisma.user.count({ where: { roleId: '' } }),
         ]);

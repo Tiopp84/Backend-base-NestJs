@@ -5,6 +5,16 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import * as bcrypt from 'bcrypt';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 
+export const userSafeFields = {
+  id: true,
+  email: true,
+  phone: true,
+  fullName: true,
+  roleId: true,
+  loyaltyPoints: true,
+  googleId: true,
+};
+
 @Injectable()
 export class UsersService {
   constructor(private readonly prisma: PrismaService) { }
@@ -25,6 +35,7 @@ export class UsersService {
         passwordHash,
         roleId: data.roleId,
       },
+      select: userSafeFields,
     });
   }
 
@@ -37,6 +48,7 @@ export class UsersService {
             skip,
             take: limit,
             orderBy: { [sortBy]: order } as any,
+            select: userSafeFields,
         }),
         this.prisma.user.count(),
     ]);
@@ -55,6 +67,7 @@ export class UsersService {
   async findOne(id: string) {
     const user = await this.prisma.user.findUnique({
       where: { id },
+      select: userSafeFields,
     });
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
@@ -75,6 +88,7 @@ export class UsersService {
     return await this.prisma.user.update({
       where: { id },
       data: updateData,
+      select: userSafeFields,
     });
   }
 
@@ -82,6 +96,7 @@ export class UsersService {
     await this.findOne(id); // Ensure exists
     return this.prisma.user.delete({
       where: { id },
+      select: userSafeFields,
     });
   }
 }
