@@ -1,7 +1,7 @@
-import { IsString, IsNotEmpty } from 'class-validator';
+import { IsEnum } from 'class-validator';
+import { OrderStatus } from 'src/common/enums/business.enum';
 
 export class UpdateOrderStatusDto {
-  @IsString()
-  @IsNotEmpty()
-  status: string; // PENDING, DELIVERED
+  @IsEnum(OrderStatus)
+  status: OrderStatus;
 }

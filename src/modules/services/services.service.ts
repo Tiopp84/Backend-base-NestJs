@@ -5,6 +5,7 @@ import { UpdateServiceDto } from './dto/update-service.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
+import { getSafeSortBy } from 'src/common/utils/pagination.util';
 
 @Injectable()
 export class ServicesService {
@@ -16,13 +17,14 @@ export class ServicesService {
     async findAll(paginationDto: PaginationDto) {
         const { page, limit, sortBy, order } = paginationDto;
         const skip = (page - 1) * limit;
+        const safeSortBy = getSafeSortBy(sortBy, ['id', 'serviceName', 'durationMin', 'price', 'commissionRate']);
 
         // Lấy dữ liệu phân trang + Sắp xếp
         const [data, total] = await Promise.all([
             this.prisma.service.findMany({
                 skip,
                 take: limit,
-                orderBy: { [sortBy]: order } as any,
+                orderBy: { [safeSortBy]: order } as any,
             }),
             this.prisma.service.count(), // Đếm tổng số để frontend tính số trang
         ]);

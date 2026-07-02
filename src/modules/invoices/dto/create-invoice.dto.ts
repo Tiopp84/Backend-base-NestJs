@@ -1,4 +1,5 @@
-import { IsString, IsNotEmpty, IsNumber, Min } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, Min, IsEnum } from 'class-validator';
+import { InvoiceStatus, PaymentMethod } from 'src/common/enums/business.enum';
 
 export class CreateInvoiceDto {
   @IsString()
@@ -9,11 +10,9 @@ export class CreateInvoiceDto {
   @Min(0)
   totalAmount: number;
 
-  @IsString()
-  @IsNotEmpty()
-  paymentMethod: string; // CASH, TRANSFER, CARD
+  @IsEnum(PaymentMethod)
+  paymentMethod: PaymentMethod;
 
-  @IsString()
-  @IsNotEmpty()
-  status: string; // PENDING, PAID, REFUNDED
+  @IsEnum(InvoiceStatus)
+  status: InvoiceStatus;
 }

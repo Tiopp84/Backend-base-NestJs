@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, UseGuards, Query, Req } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { OrdersService } from './orders.service';
@@ -19,8 +19,8 @@ export class OrdersController {
   @Post()
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(Role.Admin, Role.Manager, Role.Employee, Role.Customer)
-  create(@Body() createOrderDto: CreateOrderDto) {
-    return this.ordersService.create(createOrderDto);
+  create(@Body() createOrderDto: CreateOrderDto, @Req() req: any) {
+    return this.ordersService.create(createOrderDto, req.user);
   }
 
   @ApiBearerAuth()
@@ -28,8 +28,9 @@ export class OrdersController {
   @Get()
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(Role.Admin, Role.Manager, Role.Employee)
-  findAll(@Query() paginationDto: PaginationDto) {
-    return this.ordersService.findAll(paginationDto, paginationDto.employeeId);
+  findAll(@Query() paginationDto: PaginationDto, @Req() req: any) {
+    const employeeId = req.user.roleName === Role.Employee ? req.user.sub : paginationDto.employeeId;
+    return this.ordersService.findAll(paginationDto, employeeId);
   }
 
   @ApiBearerAuth()
@@ -50,4 +51,3 @@ export class OrdersController {
     return this.ordersService.updateStatus(id, updateOrderStatusDto);
   }
 }
-

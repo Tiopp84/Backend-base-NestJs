@@ -2,12 +2,14 @@ import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
+import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
     constructor(
         private jwtService: JwtService,
         private configService: ConfigService,
+        private prisma: PrismaService,
     ) { }
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -26,8 +28,31 @@ export class AuthGuard implements CanActivate {
                 secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
             });
 
-            // 4. Nếu hợp lệ, nhét thông tin (ID, Email) vào request để các API sau này dùng
-            request['user'] = payload;
+            const user = await this.prisma.user.findUnique({
+                where: { id: payload.sub },
+                select: {
+                    id: true,
+                    email: true,
+                    roleId: true,
+                    role: {
+                        select: {
+                            roleName: true,
+                        },
+                    },
+                },
+            });
+
+            if (!user) {
+                throw new UnauthorizedException('Tài khoản không còn tồn tại');
+            }
+
+            request['user'] = {
+                ...payload,
+                sub: user.id,
+                email: user.email,
+                roleId: user.roleId,
+                roleName: user.role?.roleName || null,
+            };
         } catch {
             // Bắt mọi lỗi: sai chữ ký, hết hạn...
             throw new UnauthorizedException('Token không hợp lệ hoặc đã hết hạn');

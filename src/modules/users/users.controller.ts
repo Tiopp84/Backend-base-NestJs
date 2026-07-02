@@ -69,7 +69,8 @@ export class UsersController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get a user by id' })
   @Get(':id')
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(Role.Admin, Role.Manager)
   findOne(@Param('id') id: string) {
     return this.usersService.findOne(id);
   }
@@ -77,7 +78,8 @@ export class UsersController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update a user by id' })
   @Patch(':id')
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(Role.Admin)
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(id, updateUserDto);
   }
@@ -91,4 +93,3 @@ export class UsersController {
     return this.usersService.remove(id);
   }
 }
-

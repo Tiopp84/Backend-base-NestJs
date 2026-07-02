@@ -1,7 +1,7 @@
-import { IsString, IsNotEmpty } from 'class-validator';
+import { IsEnum } from 'class-validator';
+import { BookingStatus } from 'src/common/enums/business.enum';
 
 export class UpdateBookingStatusDto {
-  @IsString()
-  @IsNotEmpty()
-  status: string; // PENDING, CONFIRMED, CANCELLED
+  @IsEnum(BookingStatus)
+  status: BookingStatus;
 }

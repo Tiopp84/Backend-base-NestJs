@@ -27,6 +27,8 @@ export class AuthController {
         res.cookie('refreshToken', result.refreshToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+            path: '/',
             maxAge: 7 * 24 * 60 * 60 * 1000,
         });
         return {
@@ -74,10 +76,12 @@ export class AuthController {
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+            path: '/',
             maxAge: 7 * 24 * 60 * 60 * 1000,
         });
 
-        return res.redirect(`${frontendUrl}?accessToken=${accessToken}`);
+        return res.redirect(`${frontendUrl}#accessToken=${accessToken}`);
     }
 
     @ApiOperation({ summary: 'Refresh Access Token' })
@@ -100,6 +104,8 @@ export class AuthController {
         res.clearCookie('refreshToken', {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+            path: '/',
         });
         return { message: 'Đăng xuất thành công' };
     }

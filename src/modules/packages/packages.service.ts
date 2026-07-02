@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreatePackageDto } from './dto/create-package.dto';
 import { UpdatePackageDto } from './dto/update-package.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { getSafeSortBy } from 'src/common/utils/pagination.util';
 
 @Injectable()
 export class PackagesService {
@@ -13,12 +14,13 @@ export class PackagesService {
     async findAll(paginationDto: PaginationDto) {
         const { page, limit, sortBy, order } = paginationDto;
         const skip = (page - 1) * limit;
+        const safeSortBy = getSafeSortBy(sortBy, ['id', 'packageName', 'totalSessions', 'price']);
 
         const [data, total] = await Promise.all([
             this.prisma.package.findMany({
                 skip,
                 take: limit,
-                orderBy: { [sortBy]: order } as any,
+                orderBy: { [safeSortBy]: order } as any,
             }),
             this.prisma.package.count(),
         ]);

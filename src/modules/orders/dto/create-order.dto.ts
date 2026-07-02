@@ -1,5 +1,6 @@
-import { IsString, IsNotEmpty, IsArray, ValidateNested, IsNumber, Min } from 'class-validator';
+import { IsString, IsNotEmpty, IsArray, ValidateNested, IsNumber, Min, IsEnum } from 'class-validator';
 import { Type } from 'class-transformer';
+import { OrderStatus } from 'src/common/enums/business.enum';
 
 export class OrderDetailDto {
   @IsString()
@@ -32,9 +33,8 @@ export class CreateOrderDto {
   @IsNotEmpty()
   invoiceId: string;
 
-  @IsString()
-  @IsNotEmpty()
-  status: string; // PENDING, DELIVERED
+  @IsEnum(OrderStatus)
+  status: OrderStatus;
 
   @IsArray()
   @ValidateNested({ each: true })

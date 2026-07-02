@@ -5,6 +5,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import * as bcrypt from 'bcrypt';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { getSafeSortBy } from 'src/common/utils/pagination.util';
 
 export const userSafeFields = {
   id: true,
@@ -43,12 +44,13 @@ export class UsersService {
   async findAll(paginationDto: PaginationDto) {
     const { page, limit, sortBy, order } = paginationDto;
     const skip = (page - 1) * limit;
+    const safeSortBy = getSafeSortBy(sortBy, ['id', 'email', 'phone', 'fullName', 'roleId', 'loyaltyPoints']);
 
     const [data, total] = await Promise.all([
         this.prisma.user.findMany({
             skip,
             take: limit,
-            orderBy: { [sortBy]: order } as any,
+            orderBy: { [safeSortBy]: order } as any,
             select: userSafeFields,
         }),
         this.prisma.user.count(),
@@ -215,4 +217,3 @@ export class UsersService {
     return this.prisma.role.findMany();
   }
 }
-

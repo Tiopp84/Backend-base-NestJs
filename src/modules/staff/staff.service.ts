@@ -4,6 +4,7 @@ import { AssignSkillDto } from './dto/assign-skill.dto';
 import { CreateScheduleDto } from './dto/create-schedule.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { userSafeFields } from '../users/users.service';
+import { getSafeSortBy } from 'src/common/utils/pagination.util';
 
 @Injectable()
 export class StaffService {
@@ -14,6 +15,7 @@ export class StaffService {
     async findAllStaff(paginationDto: PaginationDto) {
         const { page, limit, sortBy, order } = paginationDto;
         const skip = (page - 1) * limit;
+        const safeSortBy = getSafeSortBy(sortBy, ['id', 'email', 'phone', 'fullName', 'roleId', 'loyaltyPoints']);
 
         const [data, total] = await Promise.all([
             this.prisma.user.findMany({
@@ -24,7 +26,7 @@ export class StaffService {
                 },
                 skip,
                 take: limit,
-                orderBy: { [sortBy]: order } as any,
+                orderBy: { [safeSortBy]: order } as any,
                 select: {
                     ...userSafeFields,
                     skills: {
@@ -117,13 +119,14 @@ export class StaffService {
     async getSchedules(employeeId: string, paginationDto: PaginationDto) {
         const { page, limit, sortBy, order } = paginationDto;
         const skip = (page - 1) * limit;
+        const safeSortBy = getSafeSortBy(sortBy, ['id', 'employeeId', 'workDate', 'startTime', 'endTime', 'status']);
 
         const [data, total] = await Promise.all([
             this.prisma.employeeSchedule.findMany({
                 where: { employeeId },
                 skip,
                 take: limit,
-                orderBy: { [sortBy]: order },
+                orderBy: { [safeSortBy]: order },
             }),
             this.prisma.employeeSchedule.count({ where: { employeeId } }),
         ]);

@@ -1,14 +1,14 @@
-import { IsString, IsNotEmpty, IsArray, ValidateNested, IsOptional, IsNumber, IsDateString, Min } from 'class-validator';
+import { IsString, IsNotEmpty, IsArray, ValidateNested, IsOptional, IsNumber, IsDateString, Min, IsEnum } from 'class-validator';
 import { Type } from 'class-transformer';
+import { BookingEmployeeRole, BookingStatus } from 'src/common/enums/business.enum';
 
 export class BookingEmployeeDto {
   @IsString()
   @IsNotEmpty()
   employeeId: string;
 
-  @IsString()
-  @IsNotEmpty()
-  roleType: string;
+  @IsEnum(BookingEmployeeRole)
+  roleType: BookingEmployeeRole;
 
   @IsNumber()
   @Min(0)
@@ -53,9 +53,8 @@ export class CreateBookingDto {
   @IsDateString()
   arrivalTime: string;
 
-  @IsString()
-  @IsNotEmpty()
-  status: string; // PENDING, CONFIRMED, CANCELLED
+  @IsEnum(BookingStatus)
+  status: BookingStatus;
 
   @IsArray()
   @ValidateNested({ each: true })

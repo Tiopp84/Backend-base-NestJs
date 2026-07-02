@@ -97,20 +97,21 @@ export class AuthService {
             expiresIn: this.configService.get<string>('JWT_ACCESS_EXPIRES_IN', '15m') as any,
         });
 
-        const refresToken = await this.jwtService.signAsync(payload, {
+        const refreshToken = await this.jwtService.signAsync(payload, {
             secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
             expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRES_IN', '7d') as any,
         });
+        const refreshTokenHash = await bcrypt.hash(refreshToken, 10);
 
         await this.prisma.user.update({
             where: { id: user.id },
-            data: { refreshToken: refresToken },
+            data: { refreshToken: refreshTokenHash },
         });
 
         return {
             message: 'Đăng nhập thành công',
             accessToken,
-            refreshToken: refresToken
+            refreshToken
         };
     }
 
@@ -125,7 +126,12 @@ export class AuthService {
                 include: { role: true }
             });
 
-            if (!user || user.refreshToken !== token) {
+            if (!user || !user.refreshToken) {
+                throw new UnauthorizedException('Refresh token không hợp lệ hoặc đã bị thu hồi');
+            }
+
+            const isRefreshTokenValid = await bcrypt.compare(token, user.refreshToken);
+            if (!isRefreshTokenValid) {
                 throw new UnauthorizedException('Refresh token không hợp lệ hoặc đã bị thu hồi');
             }
 
@@ -228,19 +234,20 @@ export class AuthService {
             expiresIn: this.configService.get<string>('JWT_ACCESS_EXPIRES_IN', '15m') as any,
         });
 
-        const refresToken = await this.jwtService.signAsync(payload, {
+        const refreshToken = await this.jwtService.signAsync(payload, {
             secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
             expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRES_IN', '7d') as any,
         });
+        const refreshTokenHash = await bcrypt.hash(refreshToken, 10);
 
         await this.prisma.user.update({
             where: { id: user.id },
-            data: { refreshToken: refresToken },
+            data: { refreshToken: refreshTokenHash },
         });
 
         return {
             accessToken,
-            refreshToken: refresToken,
+            refreshToken,
             user: {
                 id: user.id,
                 email: user.email,

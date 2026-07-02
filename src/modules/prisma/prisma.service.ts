@@ -20,7 +20,9 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
         // 3. Truyền Adapter vào PrismaClient
         super({
             adapter: adapter,
-            log: ['query', 'info', 'warn', 'error'],
+            log: process.env.NODE_ENV === 'production'
+                ? ['warn', 'error']
+                : ['query', 'info', 'warn', 'error'],
         });
 
         this.pool = pool;

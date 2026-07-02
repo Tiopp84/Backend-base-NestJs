@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, UseGuards, Query, Req } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { BookingsService } from './bookings.service';
@@ -19,8 +19,8 @@ export class BookingsController {
   @Post()
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(Role.Admin, Role.Manager, Role.Employee, Role.Customer)
-  create(@Body() createBookingDto: CreateBookingDto) {
-    return this.bookingsService.create(createBookingDto);
+  create(@Body() createBookingDto: CreateBookingDto, @Req() req: any) {
+    return this.bookingsService.create(createBookingDto, req.user);
   }
 
   @ApiBearerAuth()
@@ -28,8 +28,9 @@ export class BookingsController {
   @Get()
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(Role.Admin, Role.Manager, Role.Employee)
-  findAll(@Query() paginationDto: PaginationDto) {
-    return this.bookingsService.findAll(paginationDto, paginationDto.employeeId);
+  findAll(@Query() paginationDto: PaginationDto, @Req() req: any) {
+    const employeeId = req.user.roleName === Role.Employee ? req.user.sub : paginationDto.employeeId;
+    return this.bookingsService.findAll(paginationDto, employeeId);
   }
 
   @ApiBearerAuth()
@@ -74,4 +75,3 @@ export class BookingsController {
     return this.bookingsService.updateDetail(detailId, data);
   }
 }
-
