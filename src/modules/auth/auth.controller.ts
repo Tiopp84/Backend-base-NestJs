@@ -89,4 +89,18 @@ export class AuthController {
         }
         return this.authService.refreshAccessToken(refreshToken);
     }
+
+    @ApiBearerAuth()
+    @ApiOperation({ summary: 'Logout user' })
+    @UseGuards(AuthGuard)
+    @Post('logout')
+    async logout(@Req() req: any, @Res({ passthrough: true }) res: Response) {
+        const userId = req.user.sub;
+        await this.authService.clearRefreshToken(userId);
+        res.clearCookie('refreshToken', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+        });
+        return { message: 'Đăng xuất thành công' };
+    }
 }

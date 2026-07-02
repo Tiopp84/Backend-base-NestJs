@@ -267,4 +267,11 @@ export class AuthService {
             },
         });
     }
+
+    async clearRefreshToken(userId: string) {
+        await this.prisma.user.update({
+            where: { id: userId },
+            data: { refreshToken: null },
+        });
+    }
 }

@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import * as bcrypt from 'bcrypt';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 
@@ -156,6 +157,58 @@ export class UsersService {
       invoice,
       customerPackage,
     };
+  }
+
+  async updateMyProfile(userId: string, data: UpdateProfileDto) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('Không tìm thấy tài khoản người dùng.');
+    }
+
+    const updateData: any = {};
+
+    // Update fullName
+    if (data.fullName !== undefined) {
+      updateData.fullName = data.fullName;
+    }
+
+    // Update phone with uniqueness check
+    if (data.phone !== undefined) {
+      if (data.phone !== user.phone) {
+        const existingPhone = await this.prisma.user.findFirst({
+          where: { phone: data.phone, id: { not: userId } },
+        });
+        if (existingPhone) {
+          throw new ConflictException('Số điện thoại này đã được sử dụng bởi tài khoản khác.');
+        }
+      }
+      updateData.phone = data.phone;
+    }
+
+    // Change password
+    if (data.newPassword) {
+      if (!data.currentPassword) {
+        throw new BadRequestException('Vui lòng nhập mật khẩu hiện tại để xác nhận đổi mật khẩu.');
+      }
+      if (!user.passwordHash) {
+        throw new BadRequestException('Tài khoản đăng ký qua Google không có mật khẩu để xác minh. Vui lòng liên hệ quản trị viên.');
+      }
+      const isCurrentValid = await bcrypt.compare(data.currentPassword, user.passwordHash);
+      if (!isCurrentValid) {
+        throw new BadRequestException('Mật khẩu hiện tại không đúng.');
+      }
+      updateData.passwordHash = await bcrypt.hash(data.newPassword, 10);
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      throw new BadRequestException('Không có thông tin nào được thay đổi.');
+    }
+
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+      select: userSafeFields,
+    });
   }
 
   async findAllRoles() {

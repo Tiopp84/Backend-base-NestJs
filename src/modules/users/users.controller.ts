@@ -4,6 +4,7 @@ import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from 'src/common/decorators/roles.decorator';
@@ -55,6 +56,14 @@ export class UsersController {
   @UseGuards(AuthGuard)
   purchasePackage(@Req() req: any, @Body('packageId') packageId: string) {
     return this.usersService.purchasePackage(req.user.sub, packageId);
+  }
+
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update current user profile' })
+  @Patch('me/profile')
+  @UseGuards(AuthGuard)
+  updateMyProfile(@Req() req: any, @Body() updateProfileDto: UpdateProfileDto) {
+    return this.usersService.updateMyProfile(req.user.sub, updateProfileDto);
   }
 
   @ApiBearerAuth()
