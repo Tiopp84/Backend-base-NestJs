@@ -29,7 +29,7 @@ export class OrdersController {
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(Role.Admin, Role.Manager, Role.Employee)
   findAll(@Query() paginationDto: PaginationDto) {
-    return this.ordersService.findAll(paginationDto);
+    return this.ordersService.findAll(paginationDto, paginationDto.employeeId);
   }
 
   @ApiBearerAuth()

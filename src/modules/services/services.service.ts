@@ -1,13 +1,16 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Inject } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 
 @Injectable()
 export class ServicesService {
     constructor(
-        private readonly prisma: PrismaService
+        private readonly prisma: PrismaService,
+        @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     ) { }
 
     async findAll(paginationDto: PaginationDto) {
@@ -36,7 +39,7 @@ export class ServicesService {
     }
 
     async create(data: CreateServiceDto) {
-        return this.prisma.service.create({
+        const result = await this.prisma.service.create({
             data: {
                 serviceName: data.serviceName,
                 durationMin: data.durationMin,
@@ -44,6 +47,8 @@ export class ServicesService {
                 commissionRate: data.commissionRate,
             },
         });
+        await this.cacheManager.clear();
+        return result;
     }
     async findOne(id: string) {
         const service = await this.prisma.service.findUnique({
@@ -57,7 +62,7 @@ export class ServicesService {
 
     async update(id: string, data: UpdateServiceDto) {
         await this.findOne(id); // Ensure exists
-        return this.prisma.service.update({
+        const result = await this.prisma.service.update({
             where: { id },
             data: {
                 serviceName: data.serviceName,
@@ -66,12 +71,16 @@ export class ServicesService {
                 commissionRate: data.commissionRate,
             },
         });
+        await this.cacheManager.clear();
+        return result;
     }
 
     async remove(id: string) {
         await this.findOne(id); // Ensure exists
-        return this.prisma.service.delete({
+        const result = await this.prisma.service.delete({
             where: { id },
         });
+        await this.cacheManager.clear();
+        return result;
     }
 }

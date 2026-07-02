@@ -44,29 +44,29 @@ import { validate } from './common/config/env.validation';
     UploadModule,
     NotificationsModule,
     ProgressModule,
-    ThrottlerModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        throttlers: [
-          {
-            ttl: parseInt(config.get<string>('THROTTLE_TTL', '60000'), 10),
-            limit: parseInt(config.get<string>('THROTTLE_LIMIT', '10'), 10),
-          },
-        ],
-        storage: new ThrottlerStorageRedisService(
-          `redis://${config.get('REDIS_HOST', 'localhost')}:${config.get('REDIS_PORT', 6379)}`
-        ),
-      }),
-    }),
+    // ThrottlerModule.forRootAsync({
+    //   imports: [ConfigModule],
+    //   inject: [ConfigService],
+    //   useFactory: (config: ConfigService) => ({
+    //     throttlers: [
+    //       {
+    //         ttl: parseInt(config.get<string>('THROTTLE_TTL', '60000'), 10),
+    //         limit: parseInt(config.get<string>('THROTTLE_LIMIT', '10'), 10),
+    //       },
+    //     ],
+    //     storage: new ThrottlerStorageRedisService(
+    //       `redis://${config.get('REDIS_HOST', 'localhost')}:${config.get('REDIS_PORT', 6379)}`
+    //     ),
+    //   }),
+    // }),
   ],
   controllers: [AppController],
   providers: [
     AppService,
-    {
-      provide: APP_GUARD,
-      useClass: ThrottlerGuard,
-    },
+    // {
+    //   provide: APP_GUARD,
+    //   useClass: ThrottlerGuard,
+    // },
   ],
 })
 export class AppModule { }

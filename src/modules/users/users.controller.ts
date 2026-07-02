@@ -33,6 +33,15 @@ export class UsersController {
   }
 
   @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get all roles' })
+  @Get('roles')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(Role.Admin, Role.Manager)
+  findAllRoles() {
+    return this.usersService.findAllRoles();
+  }
+
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user packages' })
   @Get('me/packages')
   @UseGuards(AuthGuard)

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Req, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ProgressService } from './progress.service';
 import { CreateProgressDto } from './dto/create-progress.dto';
@@ -6,6 +6,7 @@ import { AuthGuard } from '../auth/guards/auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { Role } from 'src/common/enums/role.enum';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 @ApiTags('progress')
 @Controller('progress')
@@ -25,9 +26,9 @@ export class ProgressController {
   @ApiOperation({ summary: 'Get customer progress logs' })
   @Get()
   @UseGuards(AuthGuard)
-  findAll(@Req() req: any) {
+  findAll(@Req() req: any, @Query() paginationDto: PaginationDto) {
     const userId = req.user.sub;
     const roleName = req.user.roleName;
-    return this.progressService.findAll(userId, roleName);
+    return this.progressService.findAll(userId, roleName, paginationDto);
   }
 }

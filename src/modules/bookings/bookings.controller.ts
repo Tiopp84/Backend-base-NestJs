@@ -29,7 +29,7 @@ export class BookingsController {
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(Role.Admin, Role.Manager, Role.Employee)
   findAll(@Query() paginationDto: PaginationDto) {
-    return this.bookingsService.findAll(paginationDto);
+    return this.bookingsService.findAll(paginationDto, paginationDto.employeeId);
   }
 
   @ApiBearerAuth()
@@ -48,6 +48,30 @@ export class BookingsController {
   @Roles(Role.Admin, Role.Manager, Role.Employee)
   updateStatus(@Param('id') id: string, @Body() updateBookingStatusDto: UpdateBookingStatusDto) {
     return this.bookingsService.updateStatus(id, updateBookingStatusDto);
+  }
+
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Allocate staff to a booking detail' })
+  @Post('details/:detailId/employees')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(Role.Admin, Role.Manager)
+  allocateEmployees(
+    @Param('detailId') detailId: string,
+    @Body('employees') employees: { employeeId: string; roleType: string; commissionEarned: number }[],
+  ) {
+    return this.bookingsService.allocateEmployees(detailId, employees);
+  }
+
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update booking detail actual times' })
+  @Patch('details/:detailId')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(Role.Admin, Role.Manager, Role.Employee)
+  updateDetail(
+    @Param('detailId') detailId: string,
+    @Body() data: { startTime?: string; endTime?: string },
+  ) {
+    return this.bookingsService.updateDetail(detailId, data);
   }
 }
 

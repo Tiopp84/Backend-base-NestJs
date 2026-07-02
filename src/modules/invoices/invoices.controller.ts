@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, UseGuards, Query, Req } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { InvoicesService } from './invoices.service';
@@ -24,6 +24,14 @@ export class InvoicesController {
   }
 
   @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get current user invoices' })
+  @Get('me')
+  @UseGuards(AuthGuard)
+  findMyInvoices(@Req() req: any, @Query() paginationDto: PaginationDto) {
+    return this.invoicesService.findByCustomerId(req.user.sub, paginationDto);
+  }
+
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get all invoices' })
   @Get()
   @UseGuards(AuthGuard, RolesGuard)
@@ -45,9 +53,21 @@ export class InvoicesController {
   @ApiOperation({ summary: 'Update invoice status' })
   @Patch(':id/status')
   @UseGuards(AuthGuard, RolesGuard)
+  @Roles(Role.Admin, Role.Manager, Role.Employee, Role.Customer)
+  updateStatus(@Param('id') id: string, @Body() updateInvoiceStatusDto: UpdateInvoiceStatusDto, @Req() req: any) {
+    return this.invoicesService.updateStatus(id, updateInvoiceStatusDto, req.user);
+  }
+
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update invoice (Unified Checkout)' })
+  @Patch(':id')
+  @UseGuards(AuthGuard, RolesGuard)
   @Roles(Role.Admin, Role.Manager)
-  updateStatus(@Param('id') id: string, @Body() updateInvoiceStatusDto: UpdateInvoiceStatusDto) {
-    return this.invoicesService.updateStatus(id, updateInvoiceStatusDto);
+  update(
+    @Param('id') id: string,
+    @Body() updateDto: { totalAmount?: number; paymentMethod?: string; status?: string },
+  ) {
+    return this.invoicesService.update(id, updateDto);
   }
 }
 

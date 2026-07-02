@@ -51,6 +51,10 @@ class EnvironmentVariables {
   @IsOptional()
   @IsEnum(StorageProvider)
   STORAGE_PROVIDER: StorageProvider = StorageProvider.MINIO;
+
+  @IsOptional()
+  @IsString()
+  AWS_S3_PUBLIC_URL?: string;
 }
 
 export function validate(config: Record<string, any>) {

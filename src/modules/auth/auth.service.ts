@@ -27,11 +27,16 @@ export class AuthService {
         const saltRound = 10;
         const hashedPassword = await bcrypt.hash(data.password, saltRound);
 
+        const customerRole = await this.prisma.role.findFirst({
+            where: { roleName: 'Customer' },
+        });
+
         const newUser = await this.prisma.user.create({
             data: {
                 email: data.email,
                 passwordHash: hashedPassword,
                 fullName: data.fullName,
+                roleId: customerRole?.id || null,
             },
         });
         return {
@@ -63,11 +68,28 @@ export class AuthService {
             throw new UnauthorizedException('Email hoặc mật khẩu không chính xác');
         }
 
+        let roleName = user.role?.roleName || null;
+        let roleId = user.roleId;
+
+        if (!roleId) {
+            const customerRole = await this.prisma.role.findFirst({
+                where: { roleName: 'Customer' },
+            });
+            if (customerRole) {
+                await this.prisma.user.update({
+                    where: { id: user.id },
+                    data: { roleId: customerRole.id },
+                });
+                roleId = customerRole.id;
+                roleName = 'Customer';
+            }
+        }
+
         const payload = {
             sub: user.id,
             email: user.email,
-            roleId: user.roleId,
-            roleName: user.role?.roleName || null,
+            roleId: roleId,
+            roleName: roleName,
         };
 
         const accessToken = await this.jwtService.signAsync(payload, {
@@ -107,11 +129,28 @@ export class AuthService {
                 throw new UnauthorizedException('Refresh token không hợp lệ hoặc đã bị thu hồi');
             }
 
+            let roleName = user.role?.roleName || null;
+            let roleId = user.roleId;
+
+            if (!roleId) {
+                const customerRole = await this.prisma.role.findFirst({
+                    where: { roleName: 'Customer' },
+                });
+                if (customerRole) {
+                    await this.prisma.user.update({
+                        where: { id: user.id },
+                        data: { roleId: customerRole.id },
+                    });
+                    roleId = customerRole.id;
+                    roleName = 'Customer';
+                }
+            }
+
             const newPayload = {
                 sub: user.id,
                 email: user.email,
-                roleId: user.roleId,
-                roleName: user.role?.roleName || null,
+                roleId: roleId,
+                roleName: roleName,
             };
 
             const accessToken = await this.jwtService.signAsync(newPayload, {
@@ -136,12 +175,23 @@ export class AuthService {
             include: { role: true }
         });
 
+        const customerRole = await this.prisma.role.findFirst({
+            where: { roleName: 'Customer' },
+        });
+
         if (user) {
-            // Cập nhật googleId nếu chưa có
+            // Cập nhật googleId hoặc role nếu chưa có
+            const updateData: any = {};
             if (!user.googleId) {
+                updateData.googleId = profile.googleId;
+            }
+            if (!user.roleId && customerRole) {
+                updateData.roleId = customerRole.id;
+            }
+            if (Object.keys(updateData).length > 0) {
                 user = await this.prisma.user.update({
                     where: { id: user.id },
-                    data: { googleId: profile.googleId },
+                    data: updateData,
                     include: { role: true }
                 });
             }
@@ -152,16 +202,25 @@ export class AuthService {
                     email: profile.email,
                     fullName: profile.fullName,
                     googleId: profile.googleId,
+                    roleId: customerRole?.id || null,
                 },
                 include: { role: true }
             });
         }
 
+        let roleName = user.role?.roleName || null;
+        let roleId = user.roleId;
+
+        if (!roleId && customerRole) {
+            roleId = customerRole.id;
+            roleName = 'Customer';
+        }
+
         const payload = {
             sub: user.id,
             email: user.email,
-            roleId: user.roleId,
-            roleName: user.role?.roleName || null,
+            roleId: roleId,
+            roleName: roleName,
         };
 
         const accessToken = await this.jwtService.signAsync(payload, {

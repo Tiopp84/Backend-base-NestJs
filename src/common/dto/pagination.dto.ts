@@ -26,4 +26,9 @@ export class PaginationDto {
     @IsOptional()
     @IsString()
     order: 'asc' | 'desc' = 'desc';
+
+    @ApiPropertyOptional()
+    @IsOptional()
+    @IsString()
+    employeeId?: string;
 }

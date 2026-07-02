@@ -30,18 +30,31 @@ export class OrdersService {
     });
   }
 
-  async findAll(paginationDto: PaginationDto) {
+  async findAll(paginationDto: PaginationDto, employeeId?: string) {
     const { page, limit, sortBy, order } = paginationDto;
     const skip = (page - 1) * limit;
+    const where = employeeId ? {
+      details: {
+        some: {
+          employeeId
+        }
+      }
+    } : {};
 
     const [data, total] = await Promise.all([
         this.prisma.order.findMany({
+            where,
             skip,
             take: limit,
             orderBy: { [sortBy]: order } as any,
-            include: { details: true },
+            include: { 
+              details: {
+                include: { product: true }
+              },
+              customer: true
+            },
         }),
-        this.prisma.order.count(),
+        this.prisma.order.count({ where }),
     ]);
 
     return {

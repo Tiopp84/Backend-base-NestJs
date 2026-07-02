@@ -72,7 +72,7 @@ export class MinioStorageService implements IFileStorage, OnModuleInit {
             ContentType: file.mimetype,
         }));
         // Return public URL or relative path
-        const endpoint = this.configService.get<string>('AWS_S3_ENDPOINT', 'http://localhost:9000');
-        return `${endpoint}/${this.bucketName}/${key}`;
+        const publicUrl = this.configService.get<string>('AWS_S3_PUBLIC_URL') || this.configService.get<string>('AWS_S3_ENDPOINT', 'http://localhost:9000');
+        return `${publicUrl}/${this.bucketName}/${key}`;
     }
 }

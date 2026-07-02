@@ -2,6 +2,7 @@ import { Module, Global } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { NotificationsProcessor } from './notifications.processor';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Global()
 @Module({
@@ -19,6 +20,7 @@ import { NotificationsProcessor } from './notifications.processor';
     BullModule.registerQueue({
       name: 'notifications',
     }),
+    NotificationsModule,
   ],
   providers: [NotificationsProcessor],
   exports: [BullModule],

@@ -3,17 +3,21 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateBookingStatusDto } from './dto/update-booking-status.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
-import { NotificationsGateway } from '../notifications/notifications.gateway';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 
 @Injectable()
 export class BookingsService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly notificationsGateway: NotificationsGateway,
+    @InjectQueue('notifications') private readonly notificationsQueue: Queue,
   ) { }
 
   async create(data: CreateBookingDto) {
-    this.notificationsGateway.sendNotification(data.customerId, 'Bạn có một booking mới');
+    await this.notificationsQueue.add('send-booking-notification', {
+      customerId: data.customerId,
+      message: 'Bạn có một booking mới',
+    });
     return this.prisma.booking.create({
       data: {
         customerId: data.customerId,
@@ -45,22 +49,40 @@ export class BookingsService {
     });
   }
 
-  async findAll(paginationDto: PaginationDto) {
+  async findAll(paginationDto: PaginationDto, employeeId?: string) {
     const { page, limit, sortBy, order } = paginationDto;
     const skip = (page - 1) * limit;
+    const where = employeeId ? {
+      details: {
+        some: {
+          employees: {
+            some: {
+              employeeId
+            }
+          }
+        }
+      }
+    } : {};
 
     const [data, total] = await Promise.all([
       this.prisma.booking.findMany({
+        where,
         skip,
         take: limit,
         orderBy: { [sortBy]: order } as any,
         include: {
           details: {
-            include: { employees: true },
+            include: { 
+              employees: {
+                include: { employee: true }
+              },
+              service: true
+            },
           },
+          customer: true
         },
       }),
-      this.prisma.booking.count(),
+      this.prisma.booking.count({ where }),
     ]);
 
     return {
@@ -95,6 +117,40 @@ export class BookingsService {
       where: { id },
       data: {
         status: data.status,
+      },
+    });
+  }
+
+  async allocateEmployees(detailId: string, employees: { employeeId: string; roleType: string; commissionEarned: number }[]) {
+    return this.prisma.$transaction(async (tx) => {
+      // 1. Delete existing allocation for this detail
+      await tx.bookingEmployee.deleteMany({
+        where: { bookingDetailId: detailId },
+      });
+      // 2. Create new allocations
+      if (employees.length > 0) {
+        await tx.bookingEmployee.createMany({
+          data: employees.map((emp) => ({
+            bookingDetailId: detailId,
+            employeeId: emp.employeeId,
+            roleType: emp.roleType,
+            commissionEarned: emp.commissionEarned,
+          })),
+        });
+      }
+      return tx.bookingDetail.findUnique({
+        where: { id: detailId },
+        include: { employees: true },
+      });
+    });
+  }
+
+  async updateDetail(detailId: string, data: { startTime?: string; endTime?: string }) {
+    return this.prisma.bookingDetail.update({
+      where: { id: detailId },
+      data: {
+        startTime: data.startTime ? new Date(data.startTime) : undefined,
+        endTime: data.endTime ? new Date(data.endTime) : undefined,
       },
     });
   }

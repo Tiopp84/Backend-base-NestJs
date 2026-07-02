@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProgressDto } from './dto/create-progress.dto';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 @Injectable()
 export class ProgressService {
@@ -32,16 +33,24 @@ export class ProgressService {
     });
   }
 
-  async findAll(userId: string, roleName: string) {
-    if (roleName === 'Customer') {
-      return this.prisma.customerProgress.findMany({
-        where: {
-          bookingDetail: {
-            booking: {
-              customerId: userId,
-            },
-          },
+  async findAll(userId: string, roleName: string, paginationDto: PaginationDto) {
+    const { page, limit, sortBy, order } = paginationDto;
+    const skip = (page - 1) * limit;
+
+    const whereClause = roleName === 'Customer' ? {
+      bookingDetail: {
+        booking: {
+          customerId: userId,
         },
+      },
+    } : {};
+
+    const [data, total] = await Promise.all([
+      this.prisma.customerProgress.findMany({
+        where: whereClause,
+        skip,
+        take: limit,
+        orderBy: { [sortBy]: order } as any,
         include: {
           bookingDetail: {
             include: {
@@ -50,24 +59,20 @@ export class ProgressService {
             },
           },
         },
-        orderBy: {
-          id: 'desc',
-        },
-      });
-    }
+      }),
+      this.prisma.customerProgress.count({
+        where: whereClause,
+      }),
+    ]);
 
-    return this.prisma.customerProgress.findMany({
-      include: {
-        bookingDetail: {
-          include: {
-            service: true,
-            booking: true,
-          },
-        },
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
       },
-      orderBy: {
-        id: 'desc',
-      },
-    });
+    };
   }
 }

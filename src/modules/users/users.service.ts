@@ -157,5 +157,9 @@ export class UsersService {
       customerPackage,
     };
   }
+
+  async findAllRoles() {
+    return this.prisma.role.findMany();
+  }
 }
 
